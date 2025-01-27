@@ -1,3 +1,5 @@
+import { Logger } from "../logger/logger";
+
 export interface FormField {
   name: string;
   value: string;
@@ -30,9 +32,29 @@ export function executeActions(
           break;
 
         case "click":
-          const clickElement = document.querySelector(action.selector);
+          const clickElement = document.querySelector<HTMLElement>(
+            action.selector,
+          );
           if (clickElement) {
-            (clickElement as HTMLElement).click();
+            if (
+              /**
+               * Prevents triggering a download in the user's browser. See discussion: https://discord.com/channels/1221455179619106887/1221893620710375425/1325847913263267861
+               *
+               * If the crawler clicks on a link with the 'download' attribute, the browser doesn't open the file in a new tab. Instead, it tries to download the file.
+               * This likely triggered a download in the user's browser. It also explains why this issue happens only rarely since the download attribute isn't commonly used.
+               *
+               * MDN: "The HTMLAnchorElement.download property is a string indicating that the linked resource is intended to be downloaded
+               * rather than displayed in the browser."
+               *
+               *
+               */
+              clickElement instanceof HTMLAnchorElement &&
+              clickElement.hasAttribute("download")
+            ) {
+              clickElement.removeAttribute("download");
+            }
+
+            clickElement.click();
           }
           executeNextAction();
           break;
@@ -118,7 +140,7 @@ export function executeActions(
           break;
 
         default:
-          console.warn(`Unknown action type: ${action.type}`);
+          Logger.warn(`Unknown action type: ${action.type}`);
           executeNextAction();
       }
     }

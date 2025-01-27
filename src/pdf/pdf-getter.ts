@@ -1,3 +1,6 @@
-export async function extractTextFromPDF(pdfUrl: string): Promise<string> {
+export async function extractTextFromPDF(
+  pdfUrl: string,
+  isRawData?: boolean
+): Promise<string> {
   return "";
 }
